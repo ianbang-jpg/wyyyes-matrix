@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WYYYES — 수수료 외 비즈니스 모델 인터랙티브 매트릭스</title>
+<style>
+  :root {
+    --primary: #2d1b69;
+    --primary-light: #7c5cfc;
+    --accent: #00d4aa;
+    --bg: #0a0a1a;
+    --card-bg: #12122a;
+    --card-border: #1e1e40;
+    --text: #e8e8f0;
+    --text-muted: #8888aa;
+    --check-green: #00b894;
+    --check-yellow: #fdcb6e;
+    --hover-glow: rgba(124, 92, 252, 0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, 'Inter', 'Helvetica Neue', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    padding: 32px 40px 24px;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+    border-bottom: 1px solid var(--card-border);
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 0%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  .header-badge {
+    padding: 5px 14px;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .header-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 10px 16px;
+    background: rgba(124, 92, 252, 0.08);
+    border: 1px solid rgba(124, 92, 252, 0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--primary-light);
+  }
+  .header-hint .icon { font-size: 16px; }
+
+  /* ── Matrix Container ── */
+  .matrix-container {
+    padding: 24px 40px 40px;
+    overflow-x: auto;
+  }
+
+  /* ── Table ── */
+  .matrix {
+    width: 100%;
+    min-width: 1100px;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+  }
+
+  /* Column header */
+  .matrix thead th {
+    padding: 16px 8px 12px;
+    text-align: center;
+    vertical-align: bottom;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 2px solid var(--primary);
+  }
+  .matrix thead th:first-child {
+    text-align: left;
+    padding-left: 16px;
+    width: 160px;
+  }
+  .plat-name {
+    display: block;
+    font-size: 14px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .plat-country {
+    display: block;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 400;
+    margin-top: 2px;
+  }
+  .col-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Row header */
+  .matrix tbody td:first-child {
+    text-align: left;
+    padding: 14px 16px;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--primary-light);
+    background: var(--bg);
+    border-right: 1px solid var(--card-border);
+    position: sticky;
+    left: 0;
+    z-index: 5;
+  }
+
+  /* Data cells */
+  .matrix tbody td {
+    padding: 0;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(30,30,64,0.6);
+    border-right: 1px solid rgba(30,30,64,0.3);
+    height: 80px;
+  }
+
+  /* Cell inner */
+  .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 8px 6px;
+    transition: all 0.2s ease;
+    cursor: default;
+    position: relative;
+  }
+  .cell.clickable {
+    cursor: pointer;
+  }
+  .cell.clickable:hover {
+    background: var(--hover-glow);
+    transform: scale(1.02);
+  }
+  .cell.clickable:hover .cell-icon {
+    transform: scale(1.15);
+  }
+  .cell.clickable:hover .cell-detail {
+    color: var(--primary-light);
+  }
+  .cell.clickable:hover::after {
+    content: "클릭하여 이동 →";
+    position: absolute;
+    bottom: 3px;
+    font-size: 8px;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  /* Cell icon */
+  .cell-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    transition: transform 0.2s ease;
+    margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .cell-icon.yes {
+    background: var(--check-green);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(0,184,148,0.3);
+  }
+  .cell-icon.partial {
+    background: var(--check-yellow);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(253,203,110,0.3);
+  }
+  .cell-icon.no {
+    background: transparent;
+    border: 1px solid #333;
+    color: #444;
+    font-size: 11px;
+  }
+
+  /* Cell detail text */
+  .cell-detail {
+    font-size: 9px;
+    color: var(--text-muted);
+    line-height: 1.35;
+    text-align: center;
+    transition: color 0.2s ease;
+  }
+
+  /* ── Tooltip (Panel) ── */
+  .overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 100;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.2s ease;
+  }
+  .overlay.active { display: flex; align-items: center; justify-content: center; }
+
+  .panel {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    animation: slideUp 0.25s ease;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .panel-header h3 {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+  }
+  .panel-header .panel-tag {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(124,92,252,0.15);
+    color: var(--primary-light);
+    white-space: nowrap;
+  }
+  .panel-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 1px solid #333;
+    background: transparent;
+    color: #888;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+  .panel-close:hover {
+    background: #333;
+    color: #fff;
+  }
+  .panel-model {
+    font-size: 12px;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .panel-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  .panel-link {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, #4a2fad 100%);
+    color: #fff;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+  .panel-link:hover {
+    background: linear-gradient(135deg, #3a2494 0%, #5a3fd6 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(124,92,252,0.3);
+  }
+  .panel-link-secondary {
+    display: block;
+    width: 100%;
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--text-muted);
+    text-align: center;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-top: 8px;
+    border: 1px solid var(--card-border);
+    transition: all 0.2s;
+  }
+  .panel-link-secondary:hover {
+    border-color: var(--primary-light);
+    color: var(--primary-light);
+  }
+
+  /* ── Footer Legend ── */
+  .footer {
+    padding: 16px 40px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--card-border);
+  }
+  .legend {
+    display: flex;
+    gap: 20px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .legend-dot.green { background: var(--check-green); }
+  .legend-dot.yellow { background: var(--check-yellow); }
+  .legend-dot.gray { background: #333; }
+  .footer-note {
+    font-size: 10px;
+    color: #555;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── Insights ── */
+  .insights {
+    padding: 0 40px 32px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .insight-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    transition: border-color 0.2s;
+  }
+  .insight-card:hover {
+    border-color: var(--primary-light);
+  }
+  .insight-card h4 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--primary-light);
+    margin-bottom: 4px;
+  }
+  .insight-card p {
+    font-size: 10px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .header { padding: 20px; }
+    .matrix-container { padding: 16px 20px; }
+    .insights { grid-template-columns: 1fr 1fr; padding: 0 20px 24px; }
+    .footer { padding: 16px 20px; flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h1>수집품 · 서브컬처 플랫폼 — 수수료 외 비즈니스 모델</h1>
+      <p>Cross-Platform Revenue Model Matrix · 각 셀을 클릭하면 해당 서비스 페이지로 이동합니다</p>
+    </div>
+    <div class="header-badge">WYYYES Internal · 2025.02.23</div>
+  </div>
+  <div class="header-hint">
+    <span class="icon">💡</span>
+    <span><strong>초록색 셀</strong>을 클릭하면 해당 플랫폼의 실제 서비스 페이지를 확인할 수 있습니다. 팝업에서 바로 이동하세요.</span>
+  </div>
+</div>
+
+<!-- ── Matrix Table ── -->
+<div class="matrix-container">
+  <table class="matrix" id="matrixTable">
+    <thead>
+      <tr>
+        <th><span class="col-label">수익 모델</span></th>
+        <th><span class="plat-name">Whatnot</span><span class="plat-country">미국 · 라이브 경매</span></th>
+        <th><span class="plat-name">StockX</span><span class="plat-country">미국 · 인증 거래소</span></th>
+        <th><span class="plat-name">GOAT</span><span class="plat-country">미국 · 인증 리셀</span></th>
+        <th><span class="plat-name">Fanatics</span><span class="plat-country">미국 · 수직통합</span></th>
+        <th><span class="plat-name">eBay</span><span class="plat-country">미국 · 종합 마켓</span></th>
+        <th><span class="plat-name">Dewu</span><span class="plat-country">중국 · 인증 기반</span></th>
+        <th><span class="plat-name">Kream</span><span class="plat-country">한국 · 인증 리셀</span></th>
+        <th><span class="plat-name">번개장터</span><span class="plat-country">한국 · C2C 마켓</span></th>
+      </tr>
+    </thead>
+    <tbody id="matrixBody"></tbody>
+  </table>
+</div>
+
+<!-- ── Insights ── -->
+<div class="insights">
+  <div class="insight-card">
+    <h4>All-in: 인증/그레이딩</h4>
+    <p>8개 플랫폼 전원 보유. 수집품 시장의 필수 인프라. Dewu·Kream은 인증이 핵심 수익원.</p>
+  </div>
+  <div class="insight-card">
+    <h4>2024~25 트렌드: 광고</h4>
+    <p>Mercari, Kream, Whatnot 모두 최근 광고 상품 런칭. eBay는 광고로만 연 $1.6B.</p>
+  </div>
+  <div class="insight-card">
+    <h4>블루오션: 시세 데이터</h4>
+    <p>StockX·Fanatics만 데이터 비즈니스 수행 중. 서브컬처 수집품 시세 DB는 전무.</p>
+  </div>
+  <div class="insight-card">
+    <h4>차별화: Vault 보관</h4>
+    <p>고가 수집품 플랫폼의 핵심 락인 요소. 실물 이동 없는 재판매로 거래 빈도 극대화.</p>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<div class="footer">
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot green"></div>운영 중 (클릭 가능)</div>
+    <div class="legend-item"><div class="legend-dot yellow"></div>제한적 / 부분 운영</div>
+    <div class="legend-item"><div class="legend-dot gray"></div>미운영</div>
+  </div>
+  <div class="footer-note">공개 정보 기반 · WYYYES 전략 검토 목적</div>
+</div>
+
+<!-- ── Panel Overlay ── -->
+<div class="overlay" id="overlay">
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-model" id="panelModel"></div>
+        <h3 id="panelTitle"></h3>
+      </div>
+      <button class="panel-close" id="panelClose">✕</button>
+    </div>
+    <p class="panel-desc" id="panelDesc"></p>
+    <a class="panel-link" id="panelLink" href="#" target="_blank" rel="noopener">서비스 페이지로 이동 →</a>
+    <a class="panel-link-secondary" id="panelLink2" href="#" target="_blank" rel="noopener" style="display:none;">참고 페이지 보기</a>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA: Matrix definition
+// ══════════════════════════════════════════
+const platforms = ['Whatnot','StockX','GOAT','Fanatics','eBay','Dewu','Kream','번개장터'];
+
+const models = [
+  { name: '광고 / 프로모션', key: 'ads' },
+  { name: 'Vault / 보관', key: 'vault' },
+  { name: '인증 / 그레이딩', key: 'auth' },
+  { name: '시세 데이터 판매', key: 'data' },
+  { name: '구독 / 멤버십', key: 'sub' },
+  { name: '핀테크 / 결제', key: 'fintech' },
+  { name: '프리미엄 배송', key: 'shipping' },
+  { name: '오프라인 이벤트', key: 'event' },
+  { name: '복원 / 클리닝', key: 'clean' },
+  { name: '셀러 레벨 / 인센티브', key: 'seller' },
+];
+
+// status: "yes" | "partial" | "no"
+const cells = {
+  // ── 광고 ──
+  'ads-Whatnot':   { status:'yes', detail:'Show Boost\n$25~200+/회', desc:'15분 단위 실시간 입찰형 광고. 카테고리 피드 1위 노출. Community Boost로 시청자도 기여 가능.', url:'https://help.whatnot.com/hc/en-us/articles/13018847374221-Whatnot-Show-Boost', url2:'https://help.whatnot.com/hc/en-us/articles/34443991672589-Promote-Tools', urlLabel:'Whatnot Show Boost 헬프센터', url2Label:'Promote Tools 가이드' },
+  'ads-StockX':    { status:'yes', detail:'Sponsored Asks\n최저가 셀러만', desc:'최저가 보유 셀러만 광고 노출 가능하여 클릭 = 구매 전환 보장. ROAS 대시보드 제공.', url:'https://stockx.com/about/sponsored-asks/', urlLabel:'StockX Sponsored Asks 소개' },
+  'ads-GOAT':      { status:'no' },
+  'ads-Fanatics':  { status:'partial', detail:'제한적', desc:'Fanatics Live 내 제한적 프로모션 기능. 본격 광고 상품은 아직 미출시.', url:'https://www.fanaticscollect.com/', urlLabel:'Fanatics Collect 메인' },
+  'ads-eBay':      { status:'yes', detail:'Promoted Listings\n연 $1.6B', desc:'2024년 광고 매출 약 $1.6B (전체 매출의 15%). 라이브에도 Promoted Stores 확장 적용.', url:'https://www.ebay.com/sellercenter/growth/ebay-advertising/promoted-listings', url2:'https://www.ebay.com/help/selling/listings/promoted-listings-overview?id=5295', urlLabel:'eBay Promoted Listings 셀러센터', url2Label:'Promoted Listings 헬프' },
+  'ads-Dewu':      { status:'yes', detail:'인앱+외부\n연 20억元 집행', desc:'인앱 광고(스플래시, 배너, 태스크) + 두인·콰이쇼우 외부 집행 연 20억元. 2024 YoY +42%.', url:'https://marketingtochina.com/dewu-poizon/', urlLabel:'Dewu 비즈니스 모델 분석 (MarketingToChina)' },
+  'ads-Kream':     { status:'yes', detail:'Premium Package\n2025.11 출시', desc:'스플래시 스크린, 팝업, 마이페이지 배너 3종. 브랜드 스토어 없는 광고주도 집행 가능.', url:'https://retailboss.co/kream-koreas-leading-authenticated-sneaker-resale-marketplace/', urlLabel:'Kream 비즈니스 모델 분석 (RetailBoss)' },
+  'ads-번개장터':    { status:'yes', detail:'키워드 광고\n+ UP 부스팅', desc:'키워드 검색 광고와 UP(리스팅 부스팅) 기능. 캐시센터에서 광고 포인트 관리.', url:'https://www.allthatsales.com/post/how-to-navigate-bunjang-as-a-foreign-buyer-fees-payment-and-buying-process-explained', urlLabel:'번개장터 이용 가이드 (AllThatSales)' },
+
+  // ── Vault ──
+  'vault-Whatnot':   { status:'no' },
+  'vault-StockX':    { status:'yes', detail:'NFT 거래 연동\n3%+1% 수수료', desc:'실물을 보관하고 NFT로 소유권만 거래. 3% 거래 + 1% 결제 수수료. 실물 출고 시 $35.', url:'https://stockx.com/help/articles/What-are-Vault-NFTs', url2:'https://stockx.com/about/stockx-launches-vault-nfts/', urlLabel:'StockX Vault NFT 헬프센터', url2Label:'Vault NFT 출시 블로그' },
+  'vault-GOAT':      { status:'yes', detail:'60일 무료\n이후 $2/월', desc:'60일 무료 보관 후 월 $2. 사전 인증 완료 상태라 Instant Ship으로 바이어에게 즉시 발송.', url:'https://support.goat.com/hc/en-us/articles/360023796371-What-is-GOAT-Storage', urlLabel:'GOAT Storage FAQ' },
+  'vault-Fanatics':  { status:'yes', detail:'$50+ 무료 무기한\n셀러 수수료 0%', desc:'$50 이상 카드 무료 무기한 보관. Vault 내 판매 시 셀러 수수료 0%. 그레이딩→보관→판매 원스톱.', url:'https://help.fanaticscollect.com/hc/en-us/articles/19008715653661-The-Vault', url2:'https://www.fanaticscollect.com/thevault', urlLabel:'Fanatics Vault 헬프센터', url2Label:'Vault 서비스 페이지' },
+  'vault-eBay':      { status:'yes', detail:'바이어 프리미엄\n3%', desc:'$250+ 상품 대상. Vault 상품 구매 시 바이어 프리미엄 3%. 2024.4부터 PSA Vault에 운영 위탁.', url:'https://www.ebay.com/help/selling/trading-cards-listing-tools/using-the-ebay-vault?id=5342', url2:'https://www.ebay.com/vault', urlLabel:'eBay Vault 이용 가이드', url2Label:'eBay Vault 메인' },
+  'vault-Dewu':      { status:'yes', detail:'60일 무료\n이후 0.2元/일', desc:'Flash Shipping 보관 서비스. 60일 무료, 이후 0.2元/일. 기술 서비스비 5%(최소 15元).', url:'https://daxueconsulting.com/dewu-in-china/', urlLabel:'Dewu 비즈니스 분석 (Daxue Consulting)' },
+  'vault-Kream':     { status:'yes', detail:'상품 가치\n최대 5%', desc:'셀러가 플랫폼에 재고 보관 후 즉시 판매 가능. 보관비 상품 가치의 최대 5%(부가세 별도).', url:'https://retailboss.co/kream-koreas-leading-authenticated-sneaker-resale-marketplace/', urlLabel:'Kream 비즈니스 모델 분석 (RetailBoss)' },
+  'vault-번개장터':    { status:'no' },
+
+  // ── 인증 ──
+  'auth-Whatnot':    { status:'yes', detail:'PSA 연동\n$30~150', desc:'체크아웃 시 PSA 인증/그레이딩 원클릭 추가. Value $30 ~ Express $150. Funko Pop도 확장.', url:'https://sportscollectorsdigest.com/news/psa-whatnot-app-partnership-card-grading-service', url2:'https://help.whatnot.com/hc/en-us/articles/13018847374221-Whatnot-Show-Boost', urlLabel:'PSA-Whatnot 파트너십 기사', url2Label:'Whatnot 헬프센터' },
+  'auth-StockX':     { status:'yes', detail:'빌트인 인증\n99.95% 정확도', desc:'300+ 전문 인증사가 월 100만 건+ 검증. 99.95% 정확도. 11개 인증 센터 운영.', url:'https://stockx.com/about/our-process/', urlLabel:'StockX 인증 프로세스 소개' },
+  'auth-GOAT':       { status:'yes', detail:'빌트인 인증\n자체 그레이딩', desc:'모든 상품 자체 인증. 독자적 그레이딩 시스템으로 중고 상품 상태 등급화.', url:'https://support.goat.com/hc/en-us/articles/115004608127-What-is-the-Assurance-of-Authenticity', url2:'https://www.goat.com/verification', urlLabel:'GOAT 인증 보증 FAQ', url2Label:'GOAT 인증 페이지' },
+  'auth-Fanatics':   { status:'yes', detail:'PSA 소유\n$9/장 온사이트', desc:'PSA(시장점유율 71.8%) 직접 소유. 온사이트 그레이딩 $9/장. 2025년 2,680만장 처리.', url:'https://help.fanaticscollect.com/hc/en-us/articles/20108473237405-Authentication', url2:'https://www.fanaticscollect.com/how-to-grade', urlLabel:'Fanatics 인증 헬프센터', url2Label:'그레이딩 가이드' },
+  'auth-eBay':       { status:'yes', detail:'AG 프로그램\n$40~80/건', desc:'Authenticity Guarantee. 시계 $80, 핸드백·주얼리 $40. 2025 Q2 분기 100만 건+ 달성.', url:'https://www.ebay.com/help/selling/selling-tools/ebay-authenticity-guarantee?id=4644', url2:'https://pages.ebay.com/authenticity-guarantee-seller/', urlLabel:'eBay AG 헬프센터', url2Label:'셀러용 AG 가이드' },
+  'auth-Dewu':       { status:'yes', detail:'핵심 수익원\n5%+검수비', desc:'"인증 후 배송" 핵심 모델. 기술 서비스비 5% + 이체비 1% + 검수비 8~20元 + 인증비 10~20元.', url:'https://legitcheck.app/information/poizon-review/', url2:'https://marketingtochina.com/dewu-poizon/', urlLabel:'Dewu/Poizon 인증 리뷰 (LegitCheck)', url2Label:'Dewu 비즈니스 분석' },
+  'auth-Kream':      { status:'yes', detail:'AI+블록체인\n7% 통합', desc:'블록체인 + AI 이미지 인식 + 전문가 하이브리드 인증. 거래가의 7%에 통합.', url:'https://retailboss.co/kream-koreas-leading-authenticated-sneaker-resale-marketplace/', urlLabel:'Kream 인증 시스템 분석 (RetailBoss)' },
+  'auth-번개장터':     { status:'yes', detail:'번개케어\n명품·스니커즈', desc:'명품·스니커즈 전문 인증 검수 서비스. 전문가 실물 검수 후 인증 태그 발급.', url:'https://aimgroup.com/2025/12/31/bunjang-authenticates-164m-luxury-goods-with-ai-powered-system/', url2:'https://inspection-auth.bunjang.co.kr/v2/bungaecare', urlLabel:'번개장터 AI 인증 기사 (AIM Group)', url2Label:'번개케어 공식 페이지' },
+
+  // ── 시세 데이터 ──
+  'data-Whatnot':    { status:'no' },
+  'data-StockX':     { status:'yes', detail:'티커 심볼\nAPI 판매', desc:'상품별 티커 심볼, 거래 히스토리, 변동성 지표. 엔터프라이즈 데이터 라이센싱 + Developer API.', url:'https://stockx.com/about/market-insights/', url2:'https://stockx.com/news/how-to-view-market-data-on-stockx-pro/', urlLabel:'StockX Market Insights', url2Label:'StockX Pro 데이터 가이드' },
+  'data-GOAT':       { status:'no' },
+  'data-Fanatics':   { status:'yes', detail:'CardLadder\n1억건+ DB', desc:'1억 건+ 검증된 판매 데이터(eBay, Goldin, Heritage 통합). 모든 리스팅에 FMV 자동 표시.', url:'https://cardladder.com/', urlLabel:'CardLadder 메인 (시세 데이터)' },
+  'data-eBay':       { status:'no' },
+  'data-Dewu':       { status:'no' },
+  'data-Kream':      { status:'no' },
+  'data-번개장터':     { status:'no' },
+
+  // ── 구독 ──
+  'sub-Whatnot':     { status:'no' },
+  'sub-StockX':      { status:'no' },
+  'sub-GOAT':        { status:'no' },
+  'sub-Fanatics':    { status:'yes', detail:'ONE 5단계\nFanCash 포인트', desc:'무료 5단계 멤버십(ONEmember→ONEblack). FanCash 포인트로 커머스·수집품·베팅 교차 사용.', url:'https://fanatics-one.com/', url2:'https://www.fanaticsinc.com/fanatics-one', urlLabel:'Fanatics ONE 공식 페이지', url2Label:'Fanatics ONE 소개' },
+  'sub-eBay':        { status:'yes', detail:'Store 구독\n$4.95~59.95/월', desc:'Starter $4.95 / Basic $21.95 / Premium $59.95 (연 기준). 티어별 FVF 할인.', url:'https://www.ebay.com/help/selling/fees-credits-invoices/store-selling-fees-managed-payments-sellers?id=4809', url2:'https://www.ebay.com/sellercenter/payments-and-fees/subscriptions-and-fees', urlLabel:'eBay Store 수수료 헬프', url2Label:'eBay 구독/수수료 셀러센터' },
+  'sub-Dewu':        { status:'yes', detail:'随心省\n13.9~35.9元', desc:'随心省 멤버십 카드. 회원 전용 할인, 프리미엄 리스팅, 맞춤 추천 제공.', url:'https://daxueconsulting.com/dewu-in-china/', urlLabel:'Dewu 멤버십 분석 (Daxue Consulting)' },
+  'sub-Kream':       { status:'no' },
+  'sub-번개장터':      { status:'no' },
+
+  // ── 핀테크 ──
+  'fintech-Whatnot':   { status:'partial', detail:'Early Payout\nBNPL 제공', desc:'배송 라벨 생성 즉시 정산(수수료 없음). BNPL(후불결제) 제공으로 구매 전환율 향상.', url:'https://help.whatnot.com/hc/en-us/articles/4417983584141-Early-Payout-Program', url2:'https://help.whatnot.com/hc/en-us/articles/17151383107725-Pay-over-time-with-Buy-Now-Pay-Later', urlLabel:'Whatnot Early Payout 헬프센터', url2Label:'BNPL(후불결제) 가이드' },
+  'fintech-StockX':    { status:'no' },
+  'fintech-GOAT':      { status:'yes', detail:'Cash-Out\n2.9% 출금비', desc:'ACH/PayPal 출금 시 2.9% 수수료. 프로모션 시 면제.', url:'https://support.goat.com/hc/en-us/articles/115004771068-How-do-I-cash-out', urlLabel:'GOAT Cash Out FAQ' },
+  'fintech-Fanatics':  { status:'yes', detail:'FanCash\n교차 생태계', desc:'FanCash 포인트를 커머스·수집품·베팅 전 영역에서 교차 사용. 생태계 락인.', url:'https://fanatics-one.com/', urlLabel:'Fanatics ONE / FanCash 페이지' },
+  'fintech-eBay':      { status:'no' },
+  'fintech-Dewu':      { status:'no' },
+  'fintech-Kream':     { status:'no' },
+  'fintech-번개장터':    { status:'yes', detail:'번개페이\n에스크로', desc:'에스크로 기반 안전결제. 개인정보 노출 없이 거래 가능. 결제 수수료 수취.', url:'https://aimgroup.com/2024/08/22/bunjang-enables-secure-payment-for-all-transactions/', url2:'https://www.allthatsales.com/post/how-to-navigate-bunjang-as-a-foreign-buyer-fees-payment-and-buying-process-explained', urlLabel:'번개페이 안전결제 기사 (AIM Group)', url2Label:'번개장터 결제 가이드' },
+
+  // ── 프리미엄 배송 ──
+  'shipping-Whatnot':    { status:'no' },
+  'shipping-StockX':     { status:'no' },
+  'shipping-GOAT':       { status:'yes', detail:'Same Day $30\nNext Day $27.95', desc:'Standard 3~4일 / Next Day $27.95 / Same Day $30(맨해튼 한정). 배송 프리미엄이 직접 매출원.', url:'https://www.goat.com/instant', urlLabel:'GOAT Instant 배송 페이지' },
+  'shipping-Fanatics':   { status:'no' },
+  'shipping-eBay':       { status:'no' },
+  'shipping-Dewu':       { status:'yes', detail:'Flash Shipping\n우선 배송', desc:'Flash Shipping으로 사전 보관 상품 우선 배송. 일반 대비 빠른 배송 경험.', url:'https://daxueconsulting.com/dewu-in-china/', urlLabel:'Dewu 배송 모델 분석 (Daxue Consulting)' },
+  'shipping-Kream':      { status:'no' },
+  'shipping-번개장터':     { status:'no' },
+
+  // ── 오프라인 이벤트 ──
+  'event-Whatnot':     { status:'no' },
+  'event-StockX':      { status:'no' },
+  'event-GOAT':        { status:'no' },
+  'event-Fanatics':    { status:'yes', detail:'Fanatics Fest\n125K+ 참가', desc:'2025년 125,000+명 참가. 입장권, 전시 부스비, 사인회, 현장 판매로 수익화.', url:'https://www.fanaticsfest.com/', url2:'https://www.fanaticsevents.com/', urlLabel:'Fanatics Fest 공식 사이트', url2Label:'Fanatics Events 페이지' },
+  'event-eBay':        { status:'no' },
+  'event-Dewu':        { status:'no' },
+  'event-Kream':       { status:'no' },
+  'event-번개장터':      { status:'no' },
+
+  // ── 복원 ──
+  'clean-Whatnot':     { status:'no' },
+  'clean-StockX':      { status:'no' },
+  'clean-GOAT':        { status:'yes', detail:'GOAT Clean\n자체 복원', desc:'중고 스니커즈 전문 클리닝 후 20~50% 할인 판매. 독자 그레이딩 + 고해상도 사진 제공.', url:'https://www.goat.com/sneakers/used', urlLabel:'GOAT 중고/복원 스니커즈 페이지' },
+  'clean-Fanatics':    { status:'no' },
+  'clean-eBay':        { status:'no' },
+  'clean-Dewu':        { status:'no' },
+  'clean-Kream':       { status:'no' },
+  'clean-번개장터':      { status:'no' },
+
+  // ── 셀러 레벨 ──
+  'seller-Whatnot':    { status:'yes', detail:'Premier Shop\n수수료 10%↓', desc:'90일+ 활동, $50K+ 매출 시 Premier 자격. 수수료 10% 할인(8%→7.2%), 뱃지, 검색 우선 노출.', url:'https://help.whatnot.com/hc/en-us/articles/31084236928909-Premier-Shop-Program', url2:'https://blog.teamwhatnot.com/unitedstates/premiershop', urlLabel:'Premier Shop 헬프센터', url2Label:'Premier Shop 블로그 소개' },
+  'seller-StockX':     { status:'yes', detail:'5단계\n9%→5%', desc:'5단계 셀러 레벨. Level 1(9%) → Level 5(5%). 벌크 배송, Early Payout, VIP 매니저 등 혜택.', url:'https://stockx.com/help/articles/what-is-the-stockx-seller-program-what-are-seller-levels', url2:'https://stockx.com/news/stockx-seller-program/', urlLabel:'StockX 셀러 레벨 헬프센터', url2Label:'셀러 프로그램 뉴스' },
+  'seller-GOAT':       { status:'yes', detail:'레이팅 기반\n9.5%~25%', desc:'셀러 레이팅 기반. 90+(9.5%) ~ 50 미만(25%). 성공 거래 +2점, 취소 -10점 페널티.', url:'https://support.goat.com/hc/en-us/articles/115004610507-Why-is-my-commission-higher-than-9-5', url2:'https://www.goat.com/fees', urlLabel:'GOAT 수수료 FAQ', url2Label:'GOAT 수수료 페이지' },
+  'seller-Fanatics':   { status:'yes', detail:'FMV 기반\n120% 초과 시 12%', desc:'공정 시장가(FMV) 기반. FMV 120% 이상 고가 리스팅 시 수수료 6%→12% 페널티.', url:'https://www.fanaticscollect.com/newsroom/introducing-simpler-fees-for-sellers-in-the-new-buy-now-marketplace', url2:'https://support.fanatics.live/hc/en-us/articles/12068583677341-Seller-Fees', urlLabel:'Fanatics 셀러 수수료 개편 공지', url2Label:'Fanatics Live 셀러 수수료' },
+  'seller-eBay':       { status:'yes', detail:'TRS 프로그램\nStore 할인', desc:'Top Rated Seller 프로그램. 판매 실적·고객 만족도 기준으로 뱃지 및 수수료 할인.', url:'https://www.ebay.com/sellercenter/protections/top-rated-program', url2:'https://pages.ebay.com/topratedplus/index.html', urlLabel:'eBay TRS 셀러센터', url2Label:'eBay Top Rated Plus 안내' },
+  'seller-Dewu':       { status:'no' },
+  'seller-Kream':      { status:'no' },
+  'seller-번개장터':     { status:'no' },
+};
+
+
+// ══════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════
+const tbody = document.getElementById('matrixBody');
+
+models.forEach(model => {
+  const tr = document.createElement('tr');
+
+  // Row header
+  const th = document.createElement('td');
+  th.textContent = model.name;
+  tr.appendChild(th);
+
+  platforms.forEach(plat => {
+    const td = document.createElement('td');
+    const key = `${model.key}-${plat}`;
+    const cell = cells[key] || { status:'no' };
+
+    const div = document.createElement('div');
+    div.className = 'cell' + (cell.status !== 'no' ? ' clickable' : '');
+
+    // Icon
+    const icon = document.createElement('div');
+    icon.className = 'cell-icon ' + (cell.status === 'yes' ? 'yes' : cell.status === 'partial' ? 'partial' : 'no');
+    icon.textContent = cell.status === 'yes' ? '✓' : cell.status === 'partial' ? '!' : '—';
+    div.appendChild(icon);
+
+    // Detail
+    if (cell.detail) {
+      const detail = document.createElement('div');
+      detail.className = 'cell-detail';
+      detail.innerHTML = cell.detail.replace(/\n/g, '<br>');
+      div.appendChild(detail);
+    }
+
+    // Click handler
+    if (cell.status !== 'no') {
+      div.addEventListener('click', () => openPanel(plat, model.name, cell));
+    }
+
+    td.appendChild(div);
+    tr.appendChild(td);
+  });
+
+  tbody.appendChild(tr);
+});
+
+
+// ══════════════════════════════════════════
+// PANEL
+// ══════════════════════════════════════════
+const overlay = document.getElementById('overlay');
+const panel = document.getElementById('panel');
+
+function openPanel(platform, modelName, cell) {
+  document.getElementById('panelModel').textContent = modelName;
+  document.getElementById('panelTitle').textContent = platform;
+  document.getElementById('panelDesc').textContent = cell.desc || '';
+  const link = document.getElementById('panelLink');
+  link.href = cell.url || '#';
+  link.textContent = cell.urlLabel ? `${cell.urlLabel} →` : `${platform} 서비스 페이지로 이동 →`;
+
+  const link2 = document.getElementById('panelLink2');
+  if (cell.url2) {
+    link2.href = cell.url2;
+    link2.style.display = 'block';
+    link2.textContent = cell.url2Label ? `${cell.url2Label} →` : '참고 페이지 보기 →';
+  } else {
+    link2.style.display = 'none';
+  }
+
+  overlay.classList.add('active');
+}
+
+document.getElementById('panelClose').addEventListener('click', () => {
+  overlay.classList.remove('active');
+});
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) overlay.classList.remove('active');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') overlay.classList.remove('active');
+});
+</script>
+
+</body>
+</html>
